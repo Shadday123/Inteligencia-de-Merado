@@ -41,24 +41,32 @@ public class SecopClient {
      * Consulta en tiempo real la API de SECOP II en datos.gov.co aplicando
      * los filtros de relevancia para la Escuela Colombiana de Ingeniería.
      */
-    public List<Alerta> consultarProcesosRelevantes(double cuantiaMinima, int limite) {
+    public List<Alerta> consultarProcesosRelevantes(String macroSector, double cuantiaMinima, int limite) {
         List<Alerta> alertas = new ArrayList<>();
 
         try {
-            // Filtros de relevancia de la Escuela:
-            // 1. Estados vigentes/abiertos
-            // 2. Cuantía mínima (evitar compras menores)
-            // 3. Palabras clave de ingeniería, software, consultoría, tecnología y analítica
-            String whereClause = String.format(
+            // Filtro base: Estados y Cuantía
+            String whereBase = String.format(
                     "estado_del_procedimiento in ('Publicado', 'Presentación de ofertas', 'Abierto') " +
-                    "AND precio_base >= %.0f " +
-                    "AND (lower(descripci_n_del_procedimiento) like '%%software%%' " +
-                    "or lower(descripci_n_del_procedimiento) like '%%tecnolog%%' " +
-                    "or lower(descripci_n_del_procedimiento) like '%%consultor%%' " +
-                    "or lower(descripci_n_del_procedimiento) like '%%analitica%%' " +
-                    "or lower(descripci_n_del_procedimiento) like '%%ingenier%%')",
-                    cuantiaMinima
+                    "AND precio_base >= %.0f", cuantiaMinima
             );
+
+            // Filtro por Macro-Sector (Entidad y palabras clave de la rúbrica)
+            String filtroSectorEntidad = "";
+            if ("educacion".equalsIgnoreCase(macroSector)) {
+                filtroSectorEntidad = " AND (lower(nombre_entidad) like '%sena%' OR lower(nombre_entidad) like '%educaci%' OR lower(nombre_entidad) like '%universidad%') " +
+                                      "AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%tecnolog%' OR lower(descripci_n_del_procedimiento) like '%capacitaci%')";
+            } else if ("tecnologia".equalsIgnoreCase(macroSector)) {
+                filtroSectorEntidad = " AND (lower(nombre_entidad) like '%tic%' OR lower(nombre_entidad) like '%tecnolog%' OR lower(nombre_entidad) like '%innovaci%') " +
+                                      "AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%desarrollo%' OR lower(descripci_n_del_procedimiento) like '%analitica%')";
+            } else {
+                // Filtro por defecto (general para la Escuela)
+                filtroSectorEntidad = " AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%tecnolog%' " +
+                                      "OR lower(descripci_n_del_procedimiento) like '%consultor%' OR lower(descripci_n_del_procedimiento) like '%analitica%' " +
+                                      "OR lower(descripci_n_del_procedimiento) like '%ingenier%')";
+            }
+
+            String whereClause = whereBase + filtroSectorEntidad;
 
             String queryParams = String.format(
                     "$limit=%d&$where=%s",
@@ -129,7 +137,7 @@ public class SecopClient {
             NivelRelevancia relevancia = (precio >= 200_000_000) ? NivelRelevancia.ALTA : NivelRelevancia.MEDIA;
 
             return new Alerta(
-                    Herramienta.SECOP_COOPERACION,
+                    Herramienta.CONTRATACION_PUBLICA,
                     titulo,
                     descripcion,
                     "SECOP II (datos.gov.co)",

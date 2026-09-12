@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 public class AlertaCreateDto {
 
-    @NotNull(message = "La herramienta es obligatoria (EMPRESAS, SECOP_COOPERACION, FONDO_RECUPERACION)")
+    @NotNull(message = "La herramienta es obligatoria (CONTRATACION_PUBLICA, EMPRESAS_OBJETIVO, COOPERACION_INTERNACIONAL)")
     private Herramienta herramienta;
 
     @NotBlank(message = "El título de la alerta es obligatorio")

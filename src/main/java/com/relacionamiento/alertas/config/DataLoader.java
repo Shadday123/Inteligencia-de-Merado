@@ -33,7 +33,7 @@ public class DataLoader implements CommandLineRunner {
             List<Alerta> iniciales = List.of(
                     // Herramienta 1: Empresas Objetivo
                     new Alerta(
-                            Herramienta.EMPRESAS,
+                            Herramienta.EMPRESAS_OBJETIVO,
                             "Bancolombia anuncia expansión de fondos para startups y Fintech",
                             "La entidad bancaria destinará $200.000 millones de pesos a líneas de crédito especiales e inversión de impacto para empresas de tecnología.",
                             "Portafolio",
@@ -46,7 +46,7 @@ public class DataLoader implements CommandLineRunner {
                             now.minusHours(4)
                     ),
                     new Alerta(
-                            Herramienta.EMPRESAS,
+                            Herramienta.EMPRESAS_OBJETIVO,
                             "ISA suscribe acuerdo estratégico para proyectos de interconexión regional",
                             "Interconexión Eléctrica S.A. firma memorando para desarrollar líneas de transmisión de energía limpia en el nororiente del país.",
                             "El Tiempo Economía",
@@ -61,7 +61,7 @@ public class DataLoader implements CommandLineRunner {
 
                     // Herramienta 2: SECOP II y Cooperación Internacional
                     new Alerta(
-                            Herramienta.SECOP_COOPERACION,
+                            Herramienta.CONTRATACION_PUBLICA,
                             "Convocatoria SECOP II: Consultoría Estratégica para Gestión de Datos",
                             "DNP abre proceso de selección abreviada para estructuración del modelo nacional de analítica de datos en programas sociales. Presupuesto: $4.500M COP.",
                             "SECOP II (datos.gov.co)",
@@ -74,7 +74,7 @@ public class DataLoader implements CommandLineRunner {
                             now.minusHours(6)
                     ),
                     new Alerta(
-                            Herramienta.SECOP_COOPERACION,
+                            Herramienta.CONTRATACION_PUBLICA,
                             "CAF lanza programa de apoyo para fortalecimiento institucional",
                             "Línea de crédito blanda y recursos de cooperación técnica para programas de relacionamiento público-privado en Colombia.",
                             "CAF - Banco de Desarrollo de América Latina",
@@ -89,7 +89,7 @@ public class DataLoader implements CommandLineRunner {
 
                     // Herramienta 3: Fondo de Recuperación Post-Terremoto
                     new Alerta(
-                            Herramienta.FONDO_RECUPERACION,
+                            Herramienta.COOPERACION_INTERNACIONAL,
                             "Fondo Milagro: Desembolso de recursos para rehabilitación de acueductos",
                             "El Ministerio de Vivienda y UNGRD destinan primer paquete financiero de $45.000 millones para reconstrucción de infraestructura básica afectada por el sismo.",
                             "UNGRD / Presidencia",
@@ -102,7 +102,7 @@ public class DataLoader implements CommandLineRunner {
                             now.minusHours(2)
                     ),
                     new Alerta(
-                            Herramienta.FONDO_RECUPERACION,
+                            Herramienta.COOPERACION_INTERNACIONAL,
                             "Banco Mundial aprueba fondo de contingencia por USD 150M para mitigación de desastres",
                             "Línea CAT DDO activada para apoyar la etapa de recuperación y reconstrucción tras eventos sísmicos en territorio colombiano.",
                             "Banco Mundial",

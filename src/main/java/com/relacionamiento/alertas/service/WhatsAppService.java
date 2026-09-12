@@ -107,17 +107,17 @@ public class WhatsAppService {
         String q = consulta.toLowerCase();
 
         if (q.contains("fondo") || q.contains("terremoto") || q.contains("reconstruccion") || q.contains("milagro")) {
-            List<Alerta> alertas = alertaRepository.findTop5ByHerramientaOrderByFechaDeteccionDesc(Herramienta.FONDO_RECUPERACION);
+            List<Alerta> alertas = alertaRepository.findTop5ByHerramientaOrderByFechaDeteccionDesc(Herramienta.COOPERACION_INTERNACIONAL);
             return formatearAlertasRespuesta("🏛️ *Fondo de Recuperación Post-Terremoto*", alertas);
         }
 
         if (q.contains("secop") || q.contains("licitacion") || q.contains("cooperacion") || q.contains("bid") || q.contains("contrato")) {
-            List<Alerta> alertas = alertaRepository.findTop5ByHerramientaOrderByFechaDeteccionDesc(Herramienta.SECOP_COOPERACION);
+            List<Alerta> alertas = alertaRepository.findTop5ByHerramientaOrderByFechaDeteccionDesc(Herramienta.CONTRATACION_PUBLICA);
             return formatearAlertasRespuesta("📋 *SECOP II y Cooperación Internacional*", alertas);
         }
 
         if (q.contains("empresa") || q.contains("ecopetrol") || q.contains("nutresa") || q.contains("bancolombia") || q.contains("inversion")) {
-            List<Alerta> alertas = alertaRepository.findTop5ByHerramientaOrderByFechaDeteccionDesc(Herramienta.EMPRESAS);
+            List<Alerta> alertas = alertaRepository.findTop5ByHerramientaOrderByFechaDeteccionDesc(Herramienta.EMPRESAS_OBJETIVO);
             return formatearAlertasRespuesta("🏢 *Empresas Objetivo Monitoreadas*", alertas);
         }
 

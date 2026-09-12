@@ -6,7 +6,6 @@ com\relacionamiento\alertas\config\OpenApiConfig.class
 com\relacionamiento\alertas\repository\AlertaSpecification.class
 com\relacionamiento\alertas\dto\whatsapp\WhatsAppSendResponseDto.class
 com\relacionamiento\alertas\service\SecopClient.class
-com\relacionamiento\alertas\controller\IngestionController.class
 com\relacionamiento\alertas\entity\Alerta.class
 com\relacionamiento\alertas\exception\GlobalExceptionHandler.class
 com\relacionamiento\alertas\domain\EstadoAlerta.class
@@ -22,6 +21,7 @@ com\relacionamiento\alertas\service\IngestionService$1.class
 com\relacionamiento\alertas\dto\whatsapp\WhatsAppSendRequestDto.class
 com\relacionamiento\alertas\dto\whatsapp\WhatsAppWebhookPayload$Text.class
 com\relacionamiento\alertas\dto\response\MetricasDto.class
+com\relacionamiento\alertas\controller\ContratacionPublicaController.class
 com\relacionamiento\alertas\exception\ResourceNotFoundException.class
 com\relacionamiento\alertas\dto\whatsapp\WhatsAppWebhookPayload$Entry.class
 com\relacionamiento\alertas\SistemaAlertasApplication.class
