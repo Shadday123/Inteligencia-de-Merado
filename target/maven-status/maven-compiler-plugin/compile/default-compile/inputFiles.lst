@@ -4,9 +4,11 @@ C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamient
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\controller\AlertaController.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\controller\ContratacionPublicaController.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\controller\WhatsAppController.java
+C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\domain\EntidadSector.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\domain\EstadoAlerta.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\domain\Herramienta.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\domain\NivelRelevancia.java
+C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\domain\Sector.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\dto\request\AlertaCreateDto.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\dto\request\EstadoUpdateDto.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\dto\response\AlertaResponseDto.java

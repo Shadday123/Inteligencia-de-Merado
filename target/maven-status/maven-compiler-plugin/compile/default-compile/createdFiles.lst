@@ -12,6 +12,7 @@ com\relacionamiento\alertas\domain\EstadoAlerta.class
 com\relacionamiento\alertas\dto\whatsapp\WhatsAppWebhookPayload.class
 com\relacionamiento\alertas\dto\whatsapp\WhatsAppWebhookPayload$Profile.class
 com\relacionamiento\alertas\domain\NivelRelevancia.class
+com\relacionamiento\alertas\domain\EntidadSector.class
 com\relacionamiento\alertas\dto\whatsapp\WhatsAppWebhookPayload$Change.class
 com\relacionamiento\alertas\controller\AlertaController.class
 com\relacionamiento\alertas\repository\AlertaRepository.class
@@ -20,6 +21,7 @@ com\relacionamiento\alertas\controller\WhatsAppController.class
 com\relacionamiento\alertas\service\IngestionService$1.class
 com\relacionamiento\alertas\dto\whatsapp\WhatsAppSendRequestDto.class
 com\relacionamiento\alertas\dto\whatsapp\WhatsAppWebhookPayload$Text.class
+com\relacionamiento\alertas\domain\Sector.class
 com\relacionamiento\alertas\dto\response\MetricasDto.class
 com\relacionamiento\alertas\controller\ContratacionPublicaController.class
 com\relacionamiento\alertas\exception\ResourceNotFoundException.class

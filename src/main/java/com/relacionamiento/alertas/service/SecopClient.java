@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.relacionamiento.alertas.domain.EstadoAlerta;
 import com.relacionamiento.alertas.domain.Herramienta;
 import com.relacionamiento.alertas.domain.NivelRelevancia;
+import com.relacionamiento.alertas.domain.Sector;
+import com.relacionamiento.alertas.domain.EntidadSector;
 import com.relacionamiento.alertas.entity.Alerta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,11 +39,8 @@ public class SecopClient {
                 .build();
     }
 
-    /**
-     * Consulta en tiempo real la API de SECOP II en datos.gov.co aplicando
-     * los filtros de relevancia para la Escuela Colombiana de Ingeniería.
-     */
-    public List<Alerta> consultarProcesosRelevantes(String macroSector, double cuantiaMinima, int limite) {
+
+    public List<Alerta> consultarProcesosRelevantes(Sector sector, EntidadSector entidad, double cuantiaMinima, int limite) {
         List<Alerta> alertas = new ArrayList<>();
 
         try {
@@ -51,22 +50,42 @@ public class SecopClient {
                     "AND precio_base >= %.0f", cuantiaMinima
             );
 
-            // Filtro por Macro-Sector (Entidad y palabras clave de la rúbrica)
-            String filtroSectorEntidad = "";
-            if ("educacion".equalsIgnoreCase(macroSector)) {
-                filtroSectorEntidad = " AND (lower(nombre_entidad) like '%sena%' OR lower(nombre_entidad) like '%educaci%' OR lower(nombre_entidad) like '%universidad%') " +
-                                      "AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%tecnolog%' OR lower(descripci_n_del_procedimiento) like '%capacitaci%')";
-            } else if ("tecnologia".equalsIgnoreCase(macroSector)) {
-                filtroSectorEntidad = " AND (lower(nombre_entidad) like '%tic%' OR lower(nombre_entidad) like '%tecnolog%' OR lower(nombre_entidad) like '%innovaci%') " +
-                                      "AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%desarrollo%' OR lower(descripci_n_del_procedimiento) like '%analitica%')";
-            } else {
-                // Filtro por defecto (general para la Escuela)
-                filtroSectorEntidad = " AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%tecnolog%' " +
-                                      "OR lower(descripci_n_del_procedimiento) like '%consultor%' OR lower(descripci_n_del_procedimiento) like '%analitica%' " +
-                                      "OR lower(descripci_n_del_procedimiento) like '%ingenier%')";
+            // Armar filtro SQL dinámico
+            StringBuilder filtroSql = new StringBuilder();
+
+            // 1. Filtrar por Entidad (si viene especificada) o por Sector (si viene sector pero no entidad)
+            if (entidad != null) {
+                // Buscamos literalmente la entidad específica
+                filtroSql.append(" AND lower(entidad) like '%")
+                         .append(entidad.getNombreReal().toLowerCase().replace("ministerio de ", "").replace(" nacional", ""))
+                         .append("%'");
+            } else if (sector != null) {
+                // Buscamos todas las entidades del sector seleccionado
+                List<EntidadSector> entidadesDelSector = EntidadSector.obtenerPorSector(sector);
+                if (!entidadesDelSector.isEmpty()) {
+                    filtroSql.append(" AND (");
+                    for (int i = 0; i < entidadesDelSector.size(); i++) {
+                        if (i > 0) filtroSql.append(" OR ");
+                        filtroSql.append("lower(entidad) like '%")
+                                 .append(entidadesDelSector.get(i).getNombreReal().toLowerCase().replace("ministerio de ", "").replace(" nacional", ""))
+                                 .append("%'");
+                    }
+                    filtroSql.append(")");
+                }
             }
 
-            String whereClause = whereBase + filtroSectorEntidad;
+            // 2. Filtrar por palabras clave de la rúbrica según el sector
+            if (sector == Sector.EDUCACION) {
+                filtroSql.append(" AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%tecnolog%' OR lower(descripci_n_del_procedimiento) like '%capacitaci%')");
+            } else if (sector == Sector.TECNOLOGIA) {
+                filtroSql.append(" AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%desarrollo%' OR lower(descripci_n_del_procedimiento) like '%analitica%')");
+            } else {
+                filtroSql.append(" AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%tecnolog%' " +
+                                 "OR lower(descripci_n_del_procedimiento) like '%consultor%' OR lower(descripci_n_del_procedimiento) like '%analitica%' " +
+                                 "OR lower(descripci_n_del_procedimiento) like '%ingenier%')");
+            }
+
+            String whereClause = whereBase + filtroSql.toString();
 
             String queryParams = String.format(
                     "$limit=%d&$where=%s",
