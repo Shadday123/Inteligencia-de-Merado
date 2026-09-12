@@ -3,6 +3,8 @@ package com.relacionamiento.alertas.service;
 import com.relacionamiento.alertas.domain.EstadoAlerta;
 import com.relacionamiento.alertas.domain.Herramienta;
 import com.relacionamiento.alertas.domain.NivelRelevancia;
+import com.relacionamiento.alertas.domain.Sector;
+import com.relacionamiento.alertas.domain.EntidadSector;
 import com.relacionamiento.alertas.entity.Alerta;
 import com.relacionamiento.alertas.repository.AlertaRepository;
 import org.springframework.stereotype.Service;
@@ -24,20 +26,20 @@ public class IngestionService {
     }
 
     @Transactional
-    public Map<String, Object> ejecutarIngestion(Herramienta herramienta) {
+    public Map<String, Object> ejecutarIngestion(Herramienta herramienta, Sector sector, EntidadSector entidad, double cuantiaMinima, int limite) {
         List<Alerta> nuevasDetectadas = new ArrayList<>();
         LocalDateTime ahora = LocalDateTime.now();
 
         switch (herramienta) {
-            case SECOP_COOPERACION -> {
+            case CONTRATACION_PUBLICA -> {
                 // Conexión real a la API SODA de SECOP II (datos.gov.co)
-                List<Alerta> reales = secopClient.consultarProcesosRelevantes(50_000_000.0, 5);
+                List<Alerta> reales = secopClient.consultarProcesosRelevantes(sector, entidad, cuantiaMinima, limite);
                 if (!reales.isEmpty()) {
                     nuevasDetectadas.addAll(reales);
                 } else {
                     // Respaldo en caso de indisponibilidad temporal de datos.gov.co
                     nuevasDetectadas.add(new Alerta(
-                            Herramienta.SECOP_COOPERACION,
+                            Herramienta.CONTRATACION_PUBLICA,
                             "Licitación Pública SECOP II: Plataforma de Analítica y Gestión de Datos",
                             "Convocatoria de MinTIC para desarrollo de plataforma de visualización de datos abiertos. Cuantía: $850.000.000 COP.",
                             "SECOP II (datos.gov.co)",
@@ -51,9 +53,9 @@ public class IngestionService {
                     ));
                 }
             }
-            case EMPRESAS -> {
+            case EMPRESAS_OBJETIVO -> {
                 nuevasDetectadas.add(new Alerta(
-                        Herramienta.EMPRESAS,
+                        Herramienta.EMPRESAS_OBJETIVO,
                         "Ecopetrol anuncia inversión de USD 500M en transición energética",
                         "La estatal petrolera detalló en su plan de negocios nuevas partidas presupuestales para proyectos de energía solar y eólica.",
                         "Portafolio",
@@ -66,9 +68,9 @@ public class IngestionService {
                         ahora.minusHours(2)
                 ));
             }
-            case FONDO_RECUPERACION -> {
+            case COOPERACION_INTERNACIONAL -> {
                 nuevasDetectadas.add(new Alerta(
-                        Herramienta.FONDO_RECUPERACION,
+                        Herramienta.COOPERACION_INTERNACIONAL,
                         "UNGRD y DNP aprueban desembolso de $85.000M para Reconstrucción",
                         "Comité directivo del Fondo Milagro avaló cronograma de obras civiles, mitigación de riesgo y vivienda para zonas afectadas por el sismo.",
                         "UNGRD Comunicados Oficiales",
@@ -96,21 +98,28 @@ public class IngestionService {
         return resultado;
     }
 
-    public Map<String, Object> generarReportePruebaSecop(double cuantiaMinima, int limite) {
-        List<Alerta> procesosReales = secopClient.consultarProcesosRelevantes(cuantiaMinima, limite);
-        List<Alerta> guardadas = alertaRepository.saveAll(filtrarDuplicados(procesosReales));
+    public Map<String, Object> generarReporteSecop(Sector sector, EntidadSector entidad, double cuantiaMinima, int limite) {
+        // 1. Consultar a SECOP II con los filtros exactos
+        List<Alerta> procesosReales = secopClient.consultarProcesosRelevantes(sector, entidad, cuantiaMinima, limite);
+        
+        // 2. Guardar en base de datos solo los que no estén repetidos (para no ensuciar la DB)
+        alertaRepository.saveAll(filtrarDuplicados(procesosReales));
 
+        // 3. Devolver TODOS los procesos encontrados para que el usuario siempre vea los resultados
         Map<String, Object> reporte = new LinkedHashMap<>();
-        reporte.put("titulo", "Reporte de Prueba: Extracción en Vivo SECOP II (Semana 3)");
-        reporte.put("fechaGeneracion", LocalDateTime.now());
-        reporte.put("fuente", "Portal de Datos Abiertos de Colombia (datos.gov.co - Dataset p6dx-8zbt)");
-        reporte.put("cuantiaMinimaFiltro", cuantiaMinima);
-        reporte.put("procesosNuevosDetectados", guardadas.size());
-        reporte.put("procesosTotalesRecibidos", procesosReales.size());
-        reporte.put("procesos", guardadas);
+        reporte.put("titulo", "Reporte de Contratación Pública (SECOP II)");
+        reporte.put("filtrosAplicados", Map.of(
+                "sector", sector != null ? sector.getDescripcion() : "Todos",
+                "entidad", entidad != null ? entidad.getNombreReal() : "Todas",
+                "cuantiaMinima", cuantiaMinima
+        ));
+        reporte.put("totalResultados", procesosReales.size());
+        reporte.put("contratos", procesosReales); // Mostramos lo que respondió SECOP realmente
 
         return reporte;
     }
+
+
 
     private List<Alerta> filtrarDuplicados(List<Alerta> alertas) {
         List<Alerta> unicas = new ArrayList<>();
@@ -132,9 +141,9 @@ public class IngestionService {
             info.put("descripcion", h.getDescripcion());
             info.put("ultimaEjecucion", ultimaEjecucion.getOrDefault(h, null));
             info.put("frecuenciaConfigurada", switch (h) {
-                case EMPRESAS -> "Diaria (RSS / Prensa)";
-                case SECOP_COOPERACION -> "Diaria (API SECOP II & Multilaterales)";
-                case FONDO_RECUPERACION -> "Cada 2-3 días (OCHA / DNP / UNGRD)";
+                case EMPRESAS_OBJETIVO -> "Diaria (RSS / Prensa)";
+                case CONTRATACION_PUBLICA -> "Diaria (API SECOP II & Multilaterales)";
+                case COOPERACION_INTERNACIONAL -> "Cada 2-3 días (OCHA / DNP / UNGRD)";
             });
             estado.put(h.name(), info);
         }

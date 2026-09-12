@@ -37,7 +37,7 @@ public class AlertaController {
 
     @GetMapping
     @Operation(summary = "Listado paginado de alertas con filtros dinámicos",
-            description = "Permite filtrar por herramienta (EMPRESAS, SECOP_COOPERACION, FONDO_RECUPERACION), nivel de relevancia, estado, rango de fechas y término de búsqueda libre.")
+            description = "Permite filtrar por herramienta (CONTRATACION_PUBLICA, EMPRESAS_OBJETIVO, COOPERACION_INTERNACIONAL), nivel de relevancia, estado, rango de fechas y término de búsqueda libre.")
     public ResponseEntity<ApiResponseDto<Page<AlertaResponseDto>>> listarAlertas(
             @Parameter(description = "Herramienta de origen") @RequestParam(required = false) Herramienta herramienta,
             @Parameter(description = "Nivel de relevancia (ALTA, MEDIA, BAJA)") @RequestParam(required = false) NivelRelevancia relevancia,
