@@ -59,10 +59,11 @@ public class EmpresasObjetivoService {
     public Map<String, Object> generarReportePrueba() {
         List<Alerta> noticiasBrutas = extraerNoticiasRSS();
         
-        // Simulador de volumen para garantizar las 60 menciones requeridas por la rúbrica
-        noticiasBrutas.addAll(generarMencionesHistoricasSimuladas(100));
+        // 100% Datos reales: Se extraen únicamente de las fuentes RSS conectadas
+        // (Simulaciones históricas eliminadas por petición del usuario)
 
         List<Alerta> relevantes = new ArrayList<>();
+        List<Alerta> nuevasParaGuardar = new ArrayList<>();
         List<Map<String, String>> falsosPositivos = new ArrayList<>();
 
         // Motor de Filtrado y Criterios de Relevancia
@@ -73,9 +74,12 @@ public class EmpresasObjetivoService {
                 if (esRelevante(noticia.getTitulo(), noticia.getDescripcion())) {
                     noticia.setEmpresaEntidadRelacionada(empresaDetectada);
                     
+                    // Siempre mostrar en el reporte
+                    relevantes.add(noticia);
+                    
                     // Solo guardar si no está duplicada en BD
                     if (!alertaRepository.existsByUrlOrigen(noticia.getUrlOrigen())) {
-                        relevantes.add(noticia);
+                        nuevasParaGuardar.add(noticia);
                     }
                 } else {
                     // Es un falso positivo: Menciona a la empresa, pero no es de impacto económico/negocios
@@ -87,8 +91,8 @@ public class EmpresasObjetivoService {
             }
         }
 
-        // Guardar las relevantes en la base de datos central
-        alertaRepository.saveAll(relevantes);
+        // Guardar las nuevas en la base de datos central
+        alertaRepository.saveAll(nuevasParaGuardar);
 
         // Armar el reporte de la Semana 4
         Map<String, Object> reporte = new LinkedHashMap<>();
@@ -191,48 +195,4 @@ public class EmpresasObjetivoService {
         return "Fuente Externa RSS";
     }
 
-    /**
-     * Método auxiliar para cumplir con la rúbrica ("Al menos 60 menciones")
-     * Dado que los RSS en vivo de un solo día no suelen tener 60 noticias EXACTAS 
-     * sobre nuestras 10 empresas, inyectamos histórico realista.
-     */
-    private List<Alerta> generarMencionesHistoricasSimuladas(int cantidad) {
-        List<Alerta> historico = new ArrayList<>();
-        Random rand = new Random();
-        String[] acciones = {"anuncia nueva inversión en", "inicia proceso de expansión en", "reporta utilidad récord en", "firma alianza estratégica con", "renueva junta directiva en", "analiza adquisición de", "presenta nuevo proyecto de"};
-        String[] contextos = {"el sector energético.", "el mercado latinoamericano.", "tecnologías limpias.", "infraestructura digital.", "su nueva fase operativa."};
-        String[] fpAcciones = {"patrocina torneo de fútbol local.", "cambia el color de su logo.", "participa en feria de empleo.", "empleado sufre accidente vial.", "realiza campaña de reciclaje."};
-
-        for (int i = 0; i < cantidad; i++) {
-            String empresa = EMPRESAS_OBJETIVO.get(rand.nextInt(EMPRESAS_OBJETIVO.size()));
-            boolean esFalsoPositivo = rand.nextInt(10) > 7; // 20% de falsos positivos
-            
-            String titulo;
-            String descripcion;
-
-            if (esFalsoPositivo) {
-                titulo = empresa + " " + fpAcciones[rand.nextInt(fpAcciones.length)];
-                descripcion = "Noticia corporativa sin impacto financiero o estratégico directo para la relación institucional.";
-            } else {
-                titulo = empresa + " " + acciones[rand.nextInt(acciones.length)] + " " + contextos[rand.nextInt(contextos.length)];
-                descripcion = "Detalles importantes sobre la " + PALABRAS_CLAVE_RELEVANTES.get(rand.nextInt(PALABRAS_CLAVE_RELEVANTES.size())) + " que transformará el modelo de negocio.";
-            }
-
-            Alerta alerta = new Alerta(
-                    Herramienta.EMPRESAS_OBJETIVO,
-                    titulo,
-                    descripcion,
-                    obtenerNombreFuente(FUENTES_RSS.get(rand.nextInt(FUENTES_RSS.size()))),
-                    "Histórico Consolidado",
-                    "Por determinar",
-                    "https://www.fuente.com/noticia/historica-" + UUID.randomUUID().toString().substring(0,8),
-                    "noticias, histórico",
-                    NivelRelevancia.ALTA,
-                    EstadoAlerta.NUEVA,
-                    LocalDateTime.now().minusDays(rand.nextInt(30))
-            );
-            historico.add(alerta);
-        }
-        return historico;
-    }
 }

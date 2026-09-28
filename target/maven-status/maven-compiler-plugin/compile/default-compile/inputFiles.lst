@@ -3,8 +3,8 @@ C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamient
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\config\OpenApiConfig.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\controller\AlertaController.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\controller\ContratacionPublicaController.java
+C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\controller\CooperacionInternacionalController.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\controller\EmpresasObjetivoController.java
-C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\controller\WhatsAppController.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\domain\EntidadSector.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\domain\EstadoAlerta.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\domain\Herramienta.java
@@ -15,9 +15,6 @@ C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamient
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\dto\response\AlertaResponseDto.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\dto\response\ApiResponseDto.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\dto\response\MetricasDto.java
-C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\dto\whatsapp\WhatsAppSendRequestDto.java
-C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\dto\whatsapp\WhatsAppSendResponseDto.java
-C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\dto\whatsapp\WhatsAppWebhookPayload.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\entity\Alerta.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\exception\ErrorResponse.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\exception\GlobalExceptionHandler.java
@@ -25,8 +22,8 @@ C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamient
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\repository\AlertaRepository.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\repository\AlertaSpecification.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\service\AlertaService.java
+C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\service\CooperacionInternacionalService.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\service\EmpresasObjetivoService.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\service\IngestionService.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\service\SecopClient.java
-C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\service\WhatsAppService.java
 C:\Users\crist\Downloads\Inteligencia-de-Merado\src\main\java\com\relacionamiento\alertas\SistemaAlertasApplication.java

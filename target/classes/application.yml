@@ -4,11 +4,7 @@ spring:
   profiles:
     active: dev
 
-whatsapp:
-  verify-token: "alerta_relacionamiento_token_2026"
-  access-token: "META_ACCESS_TOKEN_AQUI"
-  phone-number-id: "META_PHONE_NUMBER_ID_AQUI"
-  api-url: "https://graph.facebook.com/v20.0"
+
 
 springdoc:
   api-docs:
