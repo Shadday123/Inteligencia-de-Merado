@@ -33,7 +33,7 @@ public class Alerta {
     @Column(name = "empresa_entidad_relacionada", length = 255)
     private String empresaEntidadRelacionada;
 
-    @Column(name = "url_origen", length = 500)
+    @Column(name = "url_origen", length = 2000)
     private String urlOrigen;
 
     @Column(name = "palabras_clave_detectadas", length = 500)
@@ -52,6 +52,9 @@ public class Alerta {
 
     @Column(name = "fecha_deteccion", nullable = false)
     private LocalDateTime fechaDeteccion;
+
+    @Column(name = "imagen_url", length = 1000)
+    private String imagenUrl;
 
     @PrePersist
     public void prePersist() {
@@ -122,4 +125,7 @@ public class Alerta {
 
     public LocalDateTime getFechaDeteccion() { return fechaDeteccion; }
     public void setFechaDeteccion(LocalDateTime fechaDeteccion) { this.fechaDeteccion = fechaDeteccion; }
+
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 }

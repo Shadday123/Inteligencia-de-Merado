@@ -30,22 +30,23 @@ public class EmpresasObjetivoService {
 
     // Fuentes definidas en el documento de Arquitectura Semana 2
     private static final List<String> FUENTES_RSS = Arrays.asList(
+            "https://news.google.com/rss/search?q=Ecopetrol+OR+Bancolombia+OR+ISA+OR+Exito+OR+Sura+OR+EPM+when:7d&hl=es-419&gl=CO&ceid=CO:es-419",
             "https://www.portafolio.co/rss/negocios/empresas",
             "https://www.eltiempo.com/rss/economia/empresas",
             "https://www.semana.com/rss/economia/empresas/"
     );
 
-    // BBDD Interna simulada de Empresas Objetivo
     private static final List<String> EMPRESAS_OBJETIVO = Arrays.asList(
             "Ecopetrol", "Bancolombia", "ISA", "Grupo Aval", "Nutresa", 
-            "Claro", "Avianca", "Grupo Argos", "Cementos Argos", "Enel"
+            "Argos", "EPM", "Sura", "Éxito", "Avianca", "Enel", "Claro", "Celsia", "Terpel", "Postobón"
     );
 
-    // Criterios de relevancia (Semana 2)
+    // Criterios de relevancia (Semana 2) + Ampliados para prototipo
     private static final List<String> PALABRAS_CLAVE_RELEVANTES = Arrays.asList(
             "proyecto", "inversión", "inversion", "expansión", "expansion", 
             "directivo", "reorganización", "reorganizacion", "liquidación", "liquidacion", 
-            "alianza", "compra", "adquisición", "adquisicion", "crecimiento", "utilidad"
+            "alianza", "compra", "adquisición", "adquisicion", "crecimiento", "utilidad",
+            "millones", "dólar", "dolar", "tasa", "mercado", "precio", "nuevo", "acciones"
     );
 
     public EmpresasObjetivoService(AlertaRepository alertaRepository) {
@@ -59,9 +60,6 @@ public class EmpresasObjetivoService {
     public Map<String, Object> generarReportePrueba() {
         List<Alerta> noticiasBrutas = extraerNoticiasRSS();
         
-        // 100% Datos reales: Se extraen únicamente de las fuentes RSS conectadas
-        // (Simulaciones históricas eliminadas por petición del usuario)
-
         List<Alerta> relevantes = new ArrayList<>();
         List<Alerta> nuevasParaGuardar = new ArrayList<>();
         List<Map<String, String>> falsosPositivos = new ArrayList<>();
@@ -116,7 +114,9 @@ public class EmpresasObjetivoService {
 
             for (String feedUrl : FUENTES_RSS) {
                 try {
-                    Document doc = builder.parse(new URL(feedUrl).openStream());
+                    java.net.URLConnection connection = new URL(feedUrl).openConnection();
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+                    Document doc = builder.parse(connection.getInputStream());
                     doc.getDocumentElement().normalize();
                     NodeList nList = doc.getElementsByTagName("item");
 
@@ -126,13 +126,16 @@ public class EmpresasObjetivoService {
                             Element eElement = (Element) nNode;
                             String titulo = getTagValue("title", eElement);
                             String link = getTagValue("link", eElement);
-                            String descripcion = getTagValue("description", eElement);
+                            String rawDescripcion = getRawTagValue("description", eElement);
+                            String descripcion = rawDescripcion != null ? rawDescripcion.replaceAll("<[^>]*>", "").trim() : "";
                             String fechaStr = getTagValue("pubDate", eElement);
+
+                            String imageUrl = extraerImagen(eElement, rawDescripcion);
 
                             Alerta alerta = new Alerta(
                                     Herramienta.EMPRESAS_OBJETIVO,
                                     titulo != null ? titulo : "Sin título",
-                                    descripcion != null ? descripcion : "",
+                                    descripcion,
                                     obtenerNombreFuente(feedUrl),
                                     "Noticia de Prensa (RSS)",
                                     "Por determinar",
@@ -142,11 +145,12 @@ public class EmpresasObjetivoService {
                                     EstadoAlerta.NUEVA,
                                     LocalDateTime.now()
                             );
+                            alerta.setImagenUrl(imageUrl);
                             alertas.add(alerta);
                         }
                     }
                 } catch (Exception e) {
-                    log.warn("No se pudo leer el RSS: " + feedUrl);
+                    log.warn("No se pudo leer el RSS: " + feedUrl + " - Error: " + e.getMessage(), e);
                 }
             }
         } catch (Exception e) {
@@ -158,12 +162,11 @@ public class EmpresasObjetivoService {
     private String contieneEmpresaObjetivo(String titulo, String descripcion) {
         String texto = (titulo + " " + descripcion).toLowerCase();
         for (String empresa : EMPRESAS_OBJETIVO) {
-            // Regex para buscar palabra exacta y evitar falsos positivos de sufijos
-            if (Pattern.compile("\\b" + empresa.toLowerCase() + "\\b").matcher(texto).find()) {
+            if (texto.contains(empresa.toLowerCase())) {
                 return empresa;
             }
         }
-        return null;
+        return null; // Si no hay empresa, devolvemos nulo (filtro real)
     }
 
     private boolean esRelevante(String titulo, String descripcion) {
@@ -176,13 +179,47 @@ public class EmpresasObjetivoService {
         return false;
     }
 
-    private String getTagValue(String tag, Element element) {
+    private String getRawTagValue(String tag, Element element) {
         NodeList nodeList = element.getElementsByTagName(tag);
         if (nodeList != null && nodeList.getLength() > 0) {
             Node node = nodeList.item(0);
             if (node != null && node.getTextContent() != null) {
-                // Limpiar posibles tags HTML que vienen en las descripciones de RSS
-                return node.getTextContent().replaceAll("<[^>]*>", "").trim();
+                return node.getTextContent();
+            }
+        }
+        return null;
+    }
+
+    private String getTagValue(String tag, Element element) {
+        String raw = getRawTagValue(tag, element);
+        return raw != null ? raw.replaceAll("<[^>]*>", "").trim() : null;
+    }
+
+    private String extraerImagen(Element eElement, String rawDescripcion) {
+        // Opción 1: <media:content url="...">
+        NodeList mediaList = eElement.getElementsByTagName("media:content");
+        if (mediaList != null && mediaList.getLength() > 0) {
+            Element mediaElement = (Element) mediaList.item(0);
+            return mediaElement.getAttribute("url");
+        }
+        
+        // Opción 2: <enclosure url="..." type="image/...">
+        NodeList enclosureList = eElement.getElementsByTagName("enclosure");
+        if (enclosureList != null && enclosureList.getLength() > 0) {
+            for (int i = 0; i < enclosureList.getLength(); i++) {
+                Element enclosure = (Element) enclosureList.item(i);
+                String type = enclosure.getAttribute("type");
+                if (type != null && type.startsWith("image")) {
+                    return enclosure.getAttribute("url");
+                }
+            }
+        }
+        
+        // Opción 3: <img> tag en la description
+        if (rawDescripcion != null) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>").matcher(rawDescripcion);
+            if (m.find()) {
+                return m.group(1);
             }
         }
         return null;

@@ -120,7 +120,9 @@ public class CooperacionInternacionalService {
 
             for (String feedUrl : FUENTES_RSS_REALES) {
                 try {
-                    Document doc = builder.parse(new URL(feedUrl).openStream());
+                    java.net.URLConnection connection = new URL(feedUrl).openConnection();
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+                    Document doc = builder.parse(connection.getInputStream());
                     doc.getDocumentElement().normalize();
                     NodeList nList = doc.getElementsByTagName("item");
 
@@ -130,21 +132,25 @@ public class CooperacionInternacionalService {
                             Element eElement = (Element) nNode;
                             String titulo = getTagValue("title", eElement);
                             String link = getTagValue("link", eElement);
-                            String descripcion = getTagValue("description", eElement);
+                            String rawDescripcion = getRawTagValue("description", eElement);
+                            String descripcion = rawDescripcion != null ? rawDescripcion.replaceAll("<[^>]*>", "").trim() : "";
+                            String imageUrl = extraerImagen(eElement, rawDescripcion);
 
-                            alertas.add(new Alerta(
+                            Alerta alerta = new Alerta(
                                     Herramienta.COOPERACION_INTERNACIONAL,
                                     titulo != null ? titulo : "Sin título",
-                                    descripcion != null ? descripcion : "",
-                                    "OCHA / ReliefWeb",
-                                    "Reporte Humanitario (RSS)",
-                                    "OCHA",
+                                    descripcion,
+                                    obtenerNombreFuente(feedUrl),
+                                    "Reporte (RSS)",
+                                    "Por determinar",
                                     link != null ? link : feedUrl,
                                     "cooperacion, rss",
                                     NivelRelevancia.MEDIA,
                                     EstadoAlerta.NUEVA,
                                     LocalDateTime.now()
-                            ));
+                            );
+                            alerta.setImagenUrl(imageUrl);
+                            alertas.add(alerta);
                         }
                     }
                 } catch (Exception e) {
@@ -177,15 +183,54 @@ public class CooperacionInternacionalService {
         return false;
     }
 
-    private String getTagValue(String tag, Element element) {
+    private String getRawTagValue(String tag, Element element) {
         NodeList nodeList = element.getElementsByTagName(tag);
         if (nodeList != null && nodeList.getLength() > 0) {
             Node node = nodeList.item(0);
             if (node != null && node.getTextContent() != null) {
-                return node.getTextContent().replaceAll("<[^>]*>", "").trim();
+                return node.getTextContent();
             }
         }
         return null;
+    }
+
+    private String getTagValue(String tag, Element element) {
+        String raw = getRawTagValue(tag, element);
+        return raw != null ? raw.replaceAll("<[^>]*>", "").trim() : null;
+    }
+
+    private String extraerImagen(Element eElement, String rawDescripcion) {
+        NodeList mediaList = eElement.getElementsByTagName("media:content");
+        if (mediaList != null && mediaList.getLength() > 0) {
+            Element mediaElement = (Element) mediaList.item(0);
+            return mediaElement.getAttribute("url");
+        }
+        
+        NodeList enclosureList = eElement.getElementsByTagName("enclosure");
+        if (enclosureList != null && enclosureList.getLength() > 0) {
+            for (int i = 0; i < enclosureList.getLength(); i++) {
+                Element enclosure = (Element) enclosureList.item(i);
+                String type = enclosure.getAttribute("type");
+                if (type != null && type.startsWith("image")) {
+                    return enclosure.getAttribute("url");
+                }
+            }
+        }
+        
+        if (rawDescripcion != null) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>").matcher(rawDescripcion);
+            if (m.find()) {
+                return m.group(1);
+            }
+        }
+        return null;
+    }
+
+    private String obtenerNombreFuente(String url) {
+        if (url.contains("reliefweb")) return "OCHA / ReliefWeb";
+        if (url.contains("portafolio")) return "Portafolio";
+        if (url.contains("eltiempo")) return "El Tiempo";
+        return "Fuente Externa RSS";
     }
 
 }

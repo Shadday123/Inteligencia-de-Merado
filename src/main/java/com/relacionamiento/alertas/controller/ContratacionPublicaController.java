@@ -31,7 +31,7 @@ public class ContratacionPublicaController {
             @Parameter(description = "Sector (opcional)") @RequestParam(required = false) Sector sector,
             @Parameter(description = "Entidad (opcional)") @RequestParam(required = false) EntidadSector entidad,
             @Parameter(description = "Cuantía mínima") @RequestParam(defaultValue = "50000000") double cuantiaMinima,
-            @Parameter(description = "Límite") @RequestParam(defaultValue = "10") int limite
+            @Parameter(description = "Límite") @RequestParam(defaultValue = "50") int limite
     ) {
         return ResponseEntity.ok(ingestionService.ejecutarIngestion(Herramienta.CONTRATACION_PUBLICA, sector, entidad, cuantiaMinima, limite));
     }
@@ -49,7 +49,7 @@ public class ContratacionPublicaController {
             @RequestParam(defaultValue = "50000000") double cuantiaMinima,
             
             @Parameter(description = "Límite de procesos a consultar") 
-            @RequestParam(defaultValue = "10") int limite
+            @RequestParam(defaultValue = "50") int limite
     ) {
         // Validación de coherencia de filtros
         if (sector != null && entidad != null && entidad.getSector() != sector) {

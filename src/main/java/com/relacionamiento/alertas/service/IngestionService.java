@@ -32,56 +32,14 @@ public class IngestionService {
 
         switch (herramienta) {
             case CONTRATACION_PUBLICA -> {
-                // Conexión real a la API SODA de SECOP II (datos.gov.co)
                 List<Alerta> reales = secopClient.consultarProcesosRelevantes(sector, entidad, cuantiaMinima, limite);
-                if (!reales.isEmpty()) {
-                    nuevasDetectadas.addAll(reales);
-                } else {
-                    // Respaldo en caso de indisponibilidad temporal de datos.gov.co
-                    nuevasDetectadas.add(new Alerta(
-                            Herramienta.CONTRATACION_PUBLICA,
-                            "Licitación Pública SECOP II: Plataforma de Analítica y Gestión de Datos",
-                            "Convocatoria de MinTIC para desarrollo de plataforma de visualización de datos abiertos. Cuantía: $850.000.000 COP.",
-                            "SECOP II (datos.gov.co)",
-                            "Licitación Pública",
-                            "MinTIC",
-                            "https://colombiacompra.gov.co/secop-ii",
-                            "SECOP II, analítica, tecnología, software, Colombia Compra",
-                            NivelRelevancia.ALTA,
-                            EstadoAlerta.NUEVA,
-                            ahora.minusHours(1)
-                    ));
-                }
+                nuevasDetectadas.addAll(reales);
             }
             case EMPRESAS_OBJETIVO -> {
-                nuevasDetectadas.add(new Alerta(
-                        Herramienta.EMPRESAS_OBJETIVO,
-                        "Ecopetrol anuncia inversión de USD 500M en transición energética",
-                        "La estatal petrolera detalló en su plan de negocios nuevas partidas presupuestales para proyectos de energía solar y eólica.",
-                        "Portafolio",
-                        "Inversión / Expansión",
-                        "Ecopetrol S.A.",
-                        "https://www.portafolio.co/negocios/inversiones-ecopetrol-2026",
-                        "Ecopetrol, inversión, energía solar, transición energética",
-                        NivelRelevancia.ALTA,
-                        EstadoAlerta.NUEVA,
-                        ahora.minusHours(2)
-                ));
+                // Se delega al generador de reportes real (no simulado)
             }
             case COOPERACION_INTERNACIONAL -> {
-                nuevasDetectadas.add(new Alerta(
-                        Herramienta.COOPERACION_INTERNACIONAL,
-                        "UNGRD y DNP aprueban desembolso de $85.000M para Reconstrucción",
-                        "Comité directivo del Fondo Milagro avaló cronograma de obras civiles, mitigación de riesgo y vivienda para zonas afectadas por el sismo.",
-                        "UNGRD Comunicados Oficiales",
-                        "Asignación de Recursos",
-                        "UNGRD / DNP",
-                        "https://portal.ungrd.gov.co/boletines/reconstruccion-fondo-milagro",
-                        "Fondo Milagro, reconstrucción, terremoto, UNGRD, DNP, vivienda",
-                        NivelRelevancia.ALTA,
-                        EstadoAlerta.NUEVA,
-                        ahora.minusHours(3)
-                ));
+                // Se delega al generador de reportes real (no simulado)
             }
         }
 

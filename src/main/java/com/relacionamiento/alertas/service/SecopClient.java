@@ -44,23 +44,21 @@ public class SecopClient {
         List<Alerta> alertas = new ArrayList<>();
 
         try {
-            // Filtro base: Estados y Cuantía
-            String whereBase = String.format(
-                    "estado_del_procedimiento in ('Publicado', 'Presentación de ofertas', 'Abierto') " +
-                    "AND precio_base >= %.0f", cuantiaMinima
+            // Filtrar por estado, fecha no nula y aplicar cuantía
+            String whereBase = String.format(java.util.Locale.US,
+                    "estado_del_procedimiento in ('Publicado', 'Presentación de ofertas', 'Presentación de oferta', 'Abierto') AND precio_base >= %f AND fecha_de_publicacion_del IS NOT NULL",
+                    cuantiaMinima
             );
 
-            // Armar filtro SQL dinámico
-            StringBuilder filtroSql = new StringBuilder();
+            // Filtrar por palabras clave de interés para la Escuela
+            String filtroTemas = " AND (upper(nombre_del_procedimiento) like '%INGENIER%' OR upper(nombre_del_procedimiento) like '%CONSULTOR%' OR upper(nombre_del_procedimiento) like '%INTERVENTOR%' OR upper(nombre_del_procedimiento) like '%ESTUDIOS Y DISE%' OR upper(nombre_del_procedimiento) like '%OBRA%' OR upper(nombre_del_procedimiento) like '%SOFTWARE%' OR upper(nombre_del_procedimiento) like '%TECNOLOG%' OR upper(nombre_del_procedimiento) like '%CAPACITACI%' OR upper(nombre_del_procedimiento) like '%FORMACI%' OR upper(nombre_del_procedimiento) like '%EDUCACI%')";
 
-            // 1. Filtrar por Entidad (si viene especificada) o por Sector (si viene sector pero no entidad)
+            StringBuilder filtroSql = new StringBuilder();
             if (entidad != null) {
-                // Buscamos literalmente la entidad específica
                 filtroSql.append(" AND lower(entidad) like '%")
                          .append(entidad.getNombreReal().toLowerCase().replace("ministerio de ", "").replace(" nacional", ""))
                          .append("%'");
             } else if (sector != null) {
-                // Buscamos todas las entidades del sector seleccionado
                 List<EntidadSector> entidadesDelSector = EntidadSector.obtenerPorSector(sector);
                 if (!entidadesDelSector.isEmpty()) {
                     filtroSql.append(" AND (");
@@ -74,23 +72,12 @@ public class SecopClient {
                 }
             }
 
-            // 2. Filtrar por palabras clave de la rúbrica según el sector
-            if (sector == Sector.EDUCACION) {
-                filtroSql.append(" AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%tecnolog%' OR lower(descripci_n_del_procedimiento) like '%capacitaci%')");
-            } else if (sector == Sector.TECNOLOGIA) {
-                filtroSql.append(" AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%desarrollo%' OR lower(descripci_n_del_procedimiento) like '%analitica%')");
-            } else {
-                filtroSql.append(" AND (lower(descripci_n_del_procedimiento) like '%software%' OR lower(descripci_n_del_procedimiento) like '%tecnolog%' " +
-                                 "OR lower(descripci_n_del_procedimiento) like '%consultor%' OR lower(descripci_n_del_procedimiento) like '%analitica%' " +
-                                 "OR lower(descripci_n_del_procedimiento) like '%ingenier%')");
-            }
+            String whereClause = whereBase + filtroTemas + filtroSql.toString();
 
-            String whereClause = whereBase + filtroSql.toString();
-
-            String queryParams = String.format(
-                    "$limit=%d&$where=%s",
+            String queryParams = String.format(java.util.Locale.US,
+                    "$limit=%d&$order=fecha_de_publicacion_del%%20DESC&$where=%s",
                     limite,
-                    URLEncoder.encode(whereClause, StandardCharsets.UTF_8)
+                    URLEncoder.encode(whereClause, StandardCharsets.UTF_8).replace("+", "%20")
             );
 
             String fullUrl = SOCRATA_SECOP_URL + "?" + queryParams;
@@ -100,7 +87,7 @@ public class SecopClient {
                     .uri(URI.create(fullUrl))
                     .header("User-Agent", "Escuela-Alertas-Bot/1.0")
                     .header("Accept", "application/json")
-                    .timeout(Duration.ofSeconds(15))
+                    .timeout(Duration.ofSeconds(20))
                     .GET()
                     .build();
 
@@ -148,6 +135,16 @@ public class SecopClient {
                 }
             }
 
+            LocalDateTime fechaPublicacion = LocalDateTime.now();
+            if (item.hasNonNull("fecha_de_publicacion_del")) {
+                try {
+                    String f = item.get("fecha_de_publicacion_del").asText();
+                    fechaPublicacion = LocalDateTime.parse(f);
+                } catch (Exception e) {
+                    // fallback to now
+                }
+            }
+
             String titulo = String.format("[%s] %s (Cuantía: $%,.0f COP)", referencia, entidad, precio);
             if (titulo.length() > 295) {
                 titulo = titulo.substring(0, 292) + "...";
@@ -166,7 +163,7 @@ public class SecopClient {
                     "SECOP II, contratación pública, tecnología, consultoría, ingeniería",
                     relevancia,
                     EstadoAlerta.NUEVA,
-                    LocalDateTime.now()
+                    fechaPublicacion
             );
         } catch (Exception e) {
             log.warn("No se pudo mapear un registro de SECOP II", e);
