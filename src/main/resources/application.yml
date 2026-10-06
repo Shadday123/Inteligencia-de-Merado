@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: sistema-alertas-backend
+  profiles:
+    active: dev
+
+
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
