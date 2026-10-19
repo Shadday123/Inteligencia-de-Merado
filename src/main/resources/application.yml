@@ -13,3 +13,8 @@ springdoc:
     path: /swagger-ui.html
     operationsSorter: method
     tagsSorter: alpha
+
+newsapi:
+  ai:
+    key: ${NEWSAPI_AI_KEY:}
+

@@ -27,28 +27,44 @@ public class CooperacionInternacionalService {
 
     private final AlertaRepository alertaRepository;
 
-    // Fuentes reales y simuladas definidas en la Arquitectura (Semana 2)
+    // Fuentes RSS reales y activas (OCHA ReliefWeb + Google News segmentado por Agencias, Cooperación y Gestión del Riesgo/Reconstrucción)
     private static final List<String> FUENTES_RSS_REALES = Arrays.asList(
-            "https://reliefweb.int/updates/rss.xml?country=68", // OCHA / ReliefWeb Colombia
-            "https://www.portafolio.co/rss/economia/gobierno",  // DNP / Gobierno / Fondos
-            "https://www.portafolio.co/rss/economia/infraestructura", // Reconstrucción / Infraestructura
-            "https://www.eltiempo.com/rss/economia/sectores" // Sectores económicos / Subvenciones
+            // 1. OCHA / ReliefWeb Colombia (Reportes humanitarios y desastres en inglés y español)
+            "https://reliefweb.int/updates/rss.xml?country=68",
+            // 2. Agencias Multilaterales y de Cooperación en Colombia (APC Colombia, BID, CAF, Banco Mundial, Unión Europea, USAID, PNUD)
+            "https://news.google.com/rss/search?q=%22APC+Colombia%22+OR+%22Banco+Interamericano+de+Desarrollo%22+OR+%22CAF%22+OR+%22Banco+Mundial%22+OR+%22Cooperaci%C3%B3n+Internacional%22+OR+%22Uni%C3%B3n+Europea%22+Colombia&hl=es-419&gl=CO&ceid=CO:es-419",
+            // 3. Convocatorias de becas, financiación educativa, investigación, ciencia e innovación en Colombia
+            "https://news.google.com/rss/search?q=(convocatoria+OR+subvenci%C3%B3n+OR+financiaci%C3%B3n+OR+becas+OR+fondos)+(universidades+OR+investigaci%C3%B3n+OR+ingenier%C3%ADa+OR+innovaci%C3%B3n+OR+educaci%C3%B3n)+Colombia&hl=es-419&gl=CO&ceid=CO:es-419",
+            // 4. UNGRD, DNP, Reconstrucción, Sismos, Emergencias e Infraestructura Resiliente en Colombia
+            "https://news.google.com/rss/search?q=(%22UNGRD%22+OR+%22DNP%22+OR+reconstrucci%C3%B3n+OR+sismo+OR+terremoto+OR+%22gesti%C3%B3n+del+riesgo%22+OR+damnificados+OR+emergencia)+infraestructura+Colombia&hl=es-419&gl=CO&ceid=CO:es-419"
     );
 
-    private static final List<String> AGENCIAS_MONITOREADAS = Arrays.asList(
-            "APC Colombia", "BID", "CAF", "Banco Mundial", "OCHA", 
-            "Presidencia", "DNP", "UNGRD", "USAID", "Unión Europea"
-    );
+    private static final Map<String, List<String>> AGENCIAS_MONITOREADAS = new LinkedHashMap<>();
 
-    // Criterios de relevancia combinados (Cooperación + Fondo Post-Terremoto)
+    static {
+        AGENCIAS_MONITOREADAS.put("APC Colombia", Arrays.asList("apc colombia", "agencia presidencial de cooperación"));
+        AGENCIAS_MONITOREADAS.put("BID (Banco Interamericano)", Arrays.asList("banco interamericano", " bid "));
+        AGENCIAS_MONITOREADAS.put("CAF (Banco de Desarrollo)", Arrays.asList("banco de desarrollo de américa latina", " caf "));
+        AGENCIAS_MONITOREADAS.put("Banco Mundial", Arrays.asList("banco mundial", "world bank"));
+        AGENCIAS_MONITOREADAS.put("OCHA / Naciones Unidas", Arrays.asList("ocha", "naciones unidas", "onu", "pnud", "unicef", "acnur", "reliefweb"));
+        AGENCIAS_MONITOREADAS.put("UNGRD (Gestión del Riesgo)", Arrays.asList("ungrd", "gestión del riesgo", "gestion del riesgo"));
+        AGENCIAS_MONITOREADAS.put("DNP / Gobierno Nacional", Arrays.asList("dnp", "departamento nacional de planeación", "ministerio", "presidencia"));
+        AGENCIAS_MONITOREADAS.put("Unión Europea", Arrays.asList("unión europea", "union europea", "embajada"));
+        AGENCIAS_MONITOREADAS.put("USAID / Cooperación Bilateral", Arrays.asList("usaid", "cooperación internacional", "cooperacion internacional", "icetex", "minciencias"));
+    }
+
+    // Criterios de relevancia (Español + Inglés porque ReliefWeb publica en ambos idiomas)
     private static final List<String> PALABRAS_CLAVE_COOPERACION = Arrays.asList(
-            "convocatoria", "fondo", "financiamiento", "cooperación educativa", 
-            "cooperación técnica", "donación", "beca", "desarrollo", "subvención"
+            "convocatoria", "fondo", "financiamiento", "financiación", "financiacion", "cooperación", "cooperacion",
+            "donación", "donacion", "beca", "desarrollo", "subvención", "subvencion", "alianza", "apoyo",
+            "inversión", "inversion", "proyecto", "programa", "educación", "educacion", "investigación",
+            "innovación", "sostenible", "climático", "humanitarian", "funding", "response", "support", "colombia"
     );
 
     private static final List<String> PALABRAS_CLAVE_FONDO_MILAGRO = Arrays.asList(
-            "fondo milagro", "reconstrucción", "terremoto", "sismo", "desastre",
-            "infraestructura", "vivienda", "recursos", "damnificados"
+            "fondo milagro", "reconstrucción", "reconstruccion", "terremoto", "sismo", "desastre", "emergencia",
+            "infraestructura", "vivienda", "damnificados", "ungrd", "gestión del riesgo", "riesgo", "inundación",
+            "deslizamiento", "humanitaria", "earthquake", "disaster", "flood", "emergency"
     );
 
     public CooperacionInternacionalService(AlertaRepository alertaRepository) {
@@ -57,43 +73,44 @@ public class CooperacionInternacionalService {
 
     public Map<String, Object> generarReportePrueba() {
         List<Alerta> oportunidadesBrutas = extraerOportunidadesRealesRSS();
-        
-        // 100% Datos reales: Se extraen únicamente de las fuentes RSS conectadas
-        // (Simulaciones eliminadas por petición del usuario)
 
         List<Alerta> relevantes = new ArrayList<>();
         List<Alerta> nuevasParaGuardar = new ArrayList<>();
         List<Map<String, String>> falsosPositivos = new ArrayList<>();
+        Set<String> titulosVistos = new HashSet<>();
 
         for (Alerta oportunidad : oportunidadesBrutas) {
+            String tituloNorm = oportunidad.getTitulo() != null ? oportunidad.getTitulo().trim().toLowerCase() : "";
+            if (tituloNorm.isEmpty() || titulosVistos.contains(tituloNorm)) {
+                continue;
+            }
+
             String agencia = detectarAgencia(oportunidad.getTitulo(), oportunidad.getDescripcion(), oportunidad.getFuente());
-            
+
             boolean esCooperacion = evaluarRelevancia(oportunidad.getTitulo(), oportunidad.getDescripcion(), PALABRAS_CLAVE_COOPERACION);
             boolean esFondoMilagro = evaluarRelevancia(oportunidad.getTitulo(), oportunidad.getDescripcion(), PALABRAS_CLAVE_FONDO_MILAGRO);
 
             if (esCooperacion || esFondoMilagro) {
-                oportunidad.setEmpresaEntidadRelacionada(agencia != null ? agencia : "Múltiples Agencias");
-                
-                // Asignar mayor prioridad si menciona el Fondo Milagro
+                titulosVistos.add(tituloNorm);
+                oportunidad.setEmpresaEntidadRelacionada(agencia);
+
                 if (esFondoMilagro) {
                     oportunidad.setNivelRelevancia(NivelRelevancia.ALTA);
-                    oportunidad.setPalabrasClaveDetectadas("Fondo Milagro, Reconstrucción, Urgencia");
+                    oportunidad.setPalabrasClaveDetectadas("Gestión de Desastres / Reconstrucción / Urgencia");
                 } else {
                     oportunidad.setNivelRelevancia(NivelRelevancia.MEDIA);
-                    oportunidad.setPalabrasClaveDetectadas("Cooperación Internacional, Convocatoria");
+                    oportunidad.setPalabrasClaveDetectadas("Cooperación Internacional / Convocatoria / Fondos");
                 }
 
-                // Siempre lo mostramos en el reporte
                 relevantes.add(oportunidad);
-                
-                // Pero SOLO lo guardamos en BD si es nuevo (Anti-duplicados)
+
                 if (!alertaRepository.existsByUrlOrigen(oportunidad.getUrlOrigen())) {
                     nuevasParaGuardar.add(oportunidad);
                 }
             } else {
                 Map<String, String> fp = new HashMap<>();
                 fp.put("titulo", oportunidad.getTitulo());
-                fp.put("razonDescarte", "Publicación de " + agencia + " sin relación con convocatorias, fondos o reconstrucción (Ej: Cambio de directivos, visita protocolaria).");
+                fp.put("razonDescarte", "Publicación de " + agencia + " sin relación directa con convocatorias, fondos o atención de emergencias.");
                 falsosPositivos.add(fp);
             }
         }
@@ -101,8 +118,8 @@ public class CooperacionInternacionalService {
         alertaRepository.saveAll(nuevasParaGuardar);
 
         Map<String, Object> reporte = new LinkedHashMap<>();
-        reporte.put("titulo", "Reporte de Prueba: Cooperación Internacional y Fondo Post-Terremoto v1");
-        reporte.put("fuentesAnalizadas", "ReliefWeb OCHA (RSS), APC Colombia (Web), BID (API), UNGRD (Web)");
+        reporte.put("titulo", "Reporte de Cooperación Internacional y Reconstrucción / Emergencias");
+        reporte.put("fuentesAnalizadas", "OCHA ReliefWeb (RSS), Google News Cooperación Multilateral (APC, BID, CAF, BM, UE, UNGRD)");
         reporte.put("totalPublicacionesAnalizadas", oportunidadesBrutas.size());
         reporte.put("oportunidadesRelevantesDetectadas", relevantes.size());
         reporte.put("falsosPositivosDescartados", falsosPositivos.size());
@@ -121,6 +138,8 @@ public class CooperacionInternacionalService {
             for (String feedUrl : FUENTES_RSS_REALES) {
                 try {
                     java.net.URLConnection connection = new URL(feedUrl).openConnection();
+                    connection.setConnectTimeout(10000);
+                    connection.setReadTimeout(10000);
                     connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
                     Document doc = builder.parse(connection.getInputStream());
                     doc.getDocumentElement().normalize();
@@ -134,14 +153,15 @@ public class CooperacionInternacionalService {
                             String link = getTagValue("link", eElement);
                             String rawDescripcion = getRawTagValue("description", eElement);
                             String descripcion = rawDescripcion != null ? rawDescripcion.replaceAll("<[^>]*>", "").trim() : "";
+                            String sourceTag = getTagValue("source", eElement);
                             String imageUrl = extraerImagen(eElement, rawDescripcion);
 
                             Alerta alerta = new Alerta(
                                     Herramienta.COOPERACION_INTERNACIONAL,
                                     titulo != null ? titulo : "Sin título",
                                     descripcion,
-                                    obtenerNombreFuente(feedUrl),
-                                    "Reporte (RSS)",
+                                    sourceTag != null && !sourceTag.isEmpty() ? sourceTag : obtenerNombreFuente(feedUrl),
+                                    "Cooperación / Fondos (RSS)",
                                     "Por determinar",
                                     link != null ? link : feedUrl,
                                     "cooperacion, rss",
@@ -164,13 +184,15 @@ public class CooperacionInternacionalService {
     }
 
     private String detectarAgencia(String titulo, String descripcion, String fuente) {
-        String texto = (titulo + " " + descripcion + " " + fuente).toLowerCase();
-        for (String agencia : AGENCIAS_MONITOREADAS) {
-            if (texto.contains(agencia.toLowerCase())) {
-                return agencia;
+        String texto = (" " + titulo + " " + descripcion + " " + fuente + " ").toLowerCase();
+        for (Map.Entry<String, List<String>> entry : AGENCIAS_MONITOREADAS.entrySet()) {
+            for (String kw : entry.getValue()) {
+                if (texto.contains(kw.toLowerCase())) {
+                    return entry.getKey();
+                }
             }
         }
-        return "Agencia Internacional";
+        return "Cooperación Multilateral / Nacional";
     }
 
     private boolean evaluarRelevancia(String titulo, String descripcion, List<String> palabrasClave) {
