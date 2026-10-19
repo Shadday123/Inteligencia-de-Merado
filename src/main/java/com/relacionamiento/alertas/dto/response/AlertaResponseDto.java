@@ -20,7 +20,9 @@ public class AlertaResponseDto {
     private NivelRelevancia nivelRelevancia;
     private EstadoAlerta estadoAlerta;
     private LocalDateTime fechaPublicacion;
+    private LocalDateTime fechaCierre;
     private LocalDateTime fechaDeteccion;
+    private String imagenUrl;
 
     public AlertaResponseDto() {}
 
@@ -38,7 +40,9 @@ public class AlertaResponseDto {
         dto.setNivelRelevancia(entity.getNivelRelevancia());
         dto.setEstadoAlerta(entity.getEstadoAlerta());
         dto.setFechaPublicacion(entity.getFechaPublicacion());
+        dto.setFechaCierre(entity.getFechaCierre());
         dto.setFechaDeteccion(entity.getFechaDeteccion());
+        dto.setImagenUrl(entity.getImagenUrl());
         return dto;
     }
 
@@ -78,6 +82,12 @@ public class AlertaResponseDto {
     public LocalDateTime getFechaPublicacion() { return fechaPublicacion; }
     public void setFechaPublicacion(LocalDateTime fechaPublicacion) { this.fechaPublicacion = fechaPublicacion; }
 
+    public LocalDateTime getFechaCierre() { return fechaCierre; }
+    public void setFechaCierre(LocalDateTime fechaCierre) { this.fechaCierre = fechaCierre; }
+
     public LocalDateTime getFechaDeteccion() { return fechaDeteccion; }
     public void setFechaDeteccion(LocalDateTime fechaDeteccion) { this.fechaDeteccion = fechaDeteccion; }
+
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 }

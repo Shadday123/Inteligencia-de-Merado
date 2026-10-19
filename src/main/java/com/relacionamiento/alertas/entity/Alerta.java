@@ -50,6 +50,9 @@ public class Alerta {
     @Column(name = "fecha_publicacion")
     private LocalDateTime fechaPublicacion;
 
+    @Column(name = "fecha_cierre")
+    private LocalDateTime fechaCierre;
+
     @Column(name = "fecha_deteccion", nullable = false)
     private LocalDateTime fechaDeteccion;
 
@@ -122,6 +125,9 @@ public class Alerta {
 
     public LocalDateTime getFechaPublicacion() { return fechaPublicacion; }
     public void setFechaPublicacion(LocalDateTime fechaPublicacion) { this.fechaPublicacion = fechaPublicacion; }
+
+    public LocalDateTime getFechaCierre() { return fechaCierre; }
+    public void setFechaCierre(LocalDateTime fechaCierre) { this.fechaCierre = fechaCierre; }
 
     public LocalDateTime getFechaDeteccion() { return fechaDeteccion; }
     public void setFechaDeteccion(LocalDateTime fechaDeteccion) { this.fechaDeteccion = fechaDeteccion; }

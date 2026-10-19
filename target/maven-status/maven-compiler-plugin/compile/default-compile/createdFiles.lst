@@ -20,6 +20,7 @@ com\relacionamiento\alertas\service\AuthService.class
 com\relacionamiento\alertas\domain\Role.class
 com\relacionamiento\alertas\dto\auth\AuthResponse.class
 com\relacionamiento\alertas\domain\NivelRelevancia.class
+com\relacionamiento\alertas\service\EmpresasObjetivoService$EmpresaConfig.class
 com\relacionamiento\alertas\controller\AuthController.class
 com\relacionamiento\alertas\domain\EntidadSector.class
 com\relacionamiento\alertas\security\ApplicationConfig.class
@@ -31,6 +32,7 @@ com\relacionamiento\alertas\dto\response\MetricasDto.class
 com\relacionamiento\alertas\controller\ContratacionPublicaController.class
 com\relacionamiento\alertas\bootstrap\DataInitializer.class
 com\relacionamiento\alertas\exception\ResourceNotFoundException.class
+com\relacionamiento\alertas\service\EmpresasObjetivoService$1ParBusqueda.class
 com\relacionamiento\alertas\SistemaAlertasApplication.class
 com\relacionamiento\alertas\repository\UsuarioRepository.class
 com\relacionamiento\alertas\dto\response\AlertaResponseDto.class
